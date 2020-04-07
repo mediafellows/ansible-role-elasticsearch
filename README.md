@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/mediapeers/ansible-role-elasticsearch.svg?branch=master)](https://travis-ci.com/mediapeers/ansible-role-elasticsearch)
+[![Build Status](https://travis-ci.com/mediafellows/ansible-role-elasticsearch.svg?branch=master)](https://travis-ci.com/mediafellows/ansible-role-elasticsearch)
 
 # Ansible Role for Elasticsearch
 This is an Ansible role for [Elasticsearch](http://www.elasticsearch.org/).
@@ -88,7 +88,7 @@ If you prefer to skip the built-in installation of the Oracle JRE, use the `elas
 Checkout this project as a submodule under roles/:
 
 ```
-$ git submodule add git@github.com:mediapeers/ansible-role-elasticsearch.git roles/mediapeers.elasticsearch
+$ git submodule add git@github.com:mediafellows/ansible-role-elasticsearch.git roles/mediafellows.elasticsearch
 ```
 
 ### Include this role in your playbook
@@ -104,7 +104,7 @@ Example playbook, with minimal set of variables defined:
     elasticsearch_heap_size: 2g
   elasticsearch_cluster_name: my-personal-es-cluster
   roles:
-    - mediapeers.elasticsearch
+    - mediafellows.elasticsearch
   tasks:
    # Your tasks
 ```
@@ -117,6 +117,6 @@ No other Ansible roles.
 MIT
 
 # Author Information
-Stefan Horning <horning@mediapeers.com>
+Stefan Horning <stefan.horning@mediafellows.com>
 
 Based on the works of George Stathis - gstathis [at] traackr.com
