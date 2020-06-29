@@ -281,9 +281,7 @@ transport.tcp.compress: {{ elasticsearch_network_transport_tcp_compress }}
 # Set a custom port to listen for HTTP traffic:
 #
 # http.port: 9200
-{% if elasticsearch_network_http_port is defined %}
 http.port: {{ elasticsearch_network_http_port }}
-{% endif %}
 
 # Set a custom allowed content length:
 #
