@@ -83,7 +83,12 @@ If you prefer to skip the built-in installation of the Oracle JRE, use the `elas
 
 `elasticsearch_install_java: false`
 
-## Include role in a larger playbook
+## Include role in a playbook / your project
+
+### Install with ansible-galaxy
+
+Just install with `ansible-galaxy mediafellows.elasticsearch`
+
 ### Add this role as a git submodule
 Checkout this project as a submodule under roles/:
 
