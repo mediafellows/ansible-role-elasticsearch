@@ -1,5 +1,6 @@
 ---
 galaxy_info:
+  role_name: mediafellows.elasticsearch
   author: Stefan Horning
   description: Role to install and setup ElasticSearch server
   company: Mediapeers GmbH
