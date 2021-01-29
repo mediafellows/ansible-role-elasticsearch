@@ -1,3 +1,4 @@
+[![Ansible-Test](https://github.com/mediafellows/ansible-role-elasticsearch/workflows/Ansible-Test/badge.svg)`](https://github.com/mediafellows/ansible-role-elasticsearch/actions?query=workflow%3AAnsible-Test)
 
 # Ansible Role for Elasticsearch
 This is an Ansible role for [Elasticsearch](http://www.elasticsearch.org/).
