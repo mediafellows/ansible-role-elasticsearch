@@ -47,5 +47,5 @@ jobs:
       run: sudo gem install serverspec
 
     - name: Run serverspec (as root to test everything)
-      run: sudo rake spec
+      run: sudo rake spec PLAY=${{ matrix.test_play }}
 
