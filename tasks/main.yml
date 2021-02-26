@@ -66,12 +66,23 @@
     - elasticsearch_download_url is undefined
     - elasticsearch_version is version_compare('5.0', '>=')
 
-- name: Download Elasticsearch deb if needed
+- name: Download Elasticsearch deb if needed (below version 7.x)
   get_url:
     url: '{{ elasticsearch_download_url }}/elasticsearch-{{ elasticsearch_version }}.deb'
     dest: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
     mode: 0440
-  when: version_exists.stdout == 'no'
+  when:
+    - elasticsearch_version is version_compare('7.0', '<')
+    - version_exists.stdout == 'no'
+
+- name: Download Elasticsearch deb if needed
+  get_url:
+    url: '{{ elasticsearch_download_url }}/elasticsearch-{{ elasticsearch_version }}-amd64.deb'
+    dest: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+    mode: 0440
+  when:
+    - elasticsearch_version is version_compare('7.0', '>=')
+    - version_exists.stdout == 'no'
 
 - name: Uninstalling previous version if applicable
   shell: dpkg --remove elasticsearch
