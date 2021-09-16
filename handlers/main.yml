@@ -3,4 +3,6 @@
 
 # Restart Elasticsearch
 - name: Restart Elasticsearch
-  service: name=elasticsearch state=restarted
+  ansible.builtin.service:
+    name: elasticsearch
+    state: restarted

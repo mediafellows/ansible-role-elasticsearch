@@ -3,71 +3,75 @@
 
 # Information outputs
 - name: Install following ElasticSearch version
-  debug:
+  ansible.builtin.debug:
     var: elasticsearch_version
 
 - name: Plugin vars info output
-  debug:
+  ansible.builtin.debug:
     var: elasticsearch_plugins
-- debug:
+- ansible.builtin.debug:
     var: elasticsearch_aws_s3
-- debug:
+- ansible.builtin.debug:
     var: elasticsearch_aws_discovery
 
 - name: Heap size info
-  debug:
+  ansible.builtin.debug:
     var: elasticsearch_heap_size
 
 # Preparations and dependency installs
 - name: Configuring timezone
-  shell: echo {{ elasticsearch_timezone }} > /etc/timezone; dpkg-reconfigure --frontend noninteractive tzdata
+  ansible.builtin.shell:
+    cmd: echo {{ elasticsearch_timezone }} > /etc/timezone; dpkg-reconfigure --frontend noninteractive tzdata
   when: elasticsearch_timezone is defined
 
 - name: Add specified repos and update apt index
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: '{{ item }}'
     state: present
     update_cache: yes
   with_items: '{{ elasticsearch_apt_repos }}'
 
 - name: Install Java package
-  apt:
+  ansible.builtin.apt:
     pkg: '{{ elasticsearch_apt_java_package }}'
     state: present
   when: elasticsearch_install_java
 
 - name: Install other packages specified as dependencies
-  apt:
+  ansible.builtin.apt:
     pkg: '{{ elasticsearch_apt_dependencies }}'
     state: present
 
-- name: Configuring user and group
-  group:
+- name: Creating elasticsearch system group
+  ansible.builtin.group:
     name: '{{ elasticsearch_group }}'
-- user:
+
+- name: Creating elasticsearch system user
+  ansible.builtin.user:
     name: '{{ elasticsearch_user }}'
     group: '{{ elasticsearch_group }}'
     createhome: no
 
 - name: Check whether we have aleady installed the same version
-  shell: if [ -e /usr/share/elasticsearch/lib/elasticsearch-{{ elasticsearch_version }}.jar ]; then echo yes; else echo no; fi;
+  ansible.builtin.shell:
+    cmd: if [ -e /usr/share/elasticsearch/lib/elasticsearch-{{ elasticsearch_version }}.jar ]; then echo yes; else echo no; fi;
   register: version_exists
   check_mode: no
 
-- set_fact:
+- ansible.builtin.set_fact:
     elasticsearch_download_url: 'https://download.elasticsearch.org/elasticsearch/elasticsearch'
   when:
     - elasticsearch_download_url is undefined
     - elasticsearch_version is version_compare('5.0', '<')
 
-- set_fact:
+- ansible.builtin.set_fact:
     elasticsearch_download_url: 'https://artifacts.elastic.co/downloads/elasticsearch'
   when:
     - elasticsearch_download_url is undefined
     - elasticsearch_version is version_compare('5.0', '>=')
 
 - name: Download Elasticsearch deb if needed (below version 7.x)
-  get_url:
+  ansible.builtin.get_url:
     url: '{{ elasticsearch_download_url }}/elasticsearch-{{ elasticsearch_version }}.deb'
     dest: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
     mode: 0440
@@ -76,7 +80,7 @@
     - version_exists.stdout == 'no'
 
 - name: Download Elasticsearch deb if needed
-  get_url:
+  ansible.builtin.get_url:
     url: '{{ elasticsearch_download_url }}/elasticsearch-{{ elasticsearch_version }}-amd64.deb'
     dest: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
     mode: 0440
@@ -85,36 +89,55 @@
     - version_exists.stdout == 'no'
 
 - name: Uninstalling previous version if applicable
-  shell: dpkg --remove elasticsearch
+  ansible.builtin.shell:
+    cmd: dpkg --remove elasticsearch
   when: version_exists.stdout == 'no'
 
-- file:
+- ansible.builtin.file:
     path: /usr/share/elasticsearch
     state: absent
   when: version_exists.stdout == 'no'
 
 - name: Install Elasticsearch deb
-  shell: dpkg -i -E --force-confnew /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  ansible.builtin.shell:
+    cmd: dpkg -i -E --force-confnew /tmp/elasticsearch-{{ elasticsearch_version }}.deb
   when: version_exists.stdout == 'no'
 
 - name: Ensure correct permissions
-  file:
+  ansible.builtin.file:
     path: /usr/share/elasticsearch
     state: directory
     owner: '{{ elasticsearch_user }}'
     group: '{{ elasticsearch_group }}'
     recurse: yes
 
-- name: Configuring directories
-  file: path={{ elasticsearch_log_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
+- name: Creating elasticsearch directories
+  ansible.builtin.file:
+    path: '{{ elasticsearch_log_dir }}'
+    state: directory
+    owner: '{{ elasticsearch_user }}'
+    group: '{{ elasticsearch_group }}'
+    recurse: yes
   when: elasticsearch_log_dir is defined
-- file: path={{ elasticsearch_data_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
+
+- ansible.builtin.file:
+    path: '{{ elasticsearch_data_dir }}'
+    state: directory
+    owner: '{{ elasticsearch_user }}'
+    group: '{{ elasticsearch_group }}'
+    recurse: yes
   when: elasticsearch_data_dir is defined
-- file: path={{ elasticsearch_work_dir }} state=directory owner={{ elasticsearch_user }} group={{ elasticsearch_group }} recurse=yes
+
+- ansible.builtin.file:
+    path: '{{ elasticsearch_work_dir }}'
+    state: directory
+    owner: '{{ elasticsearch_user }}'
+    group: '{{ elasticsearch_group }}'
+    recurse: yes
   when: elasticsearch_work_dir is defined
 
 - name: Configuring open file limits
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: /etc/security/limits.conf
     regexp: '^{{ elasticsearch_user }}     -    nofile    {{ elasticsearch_max_open_files }}'
     insertafter: EOF
@@ -122,7 +145,7 @@
   when: elasticsearch_max_open_files is defined
   notify: Restart Elasticsearch
 
-- lineinfile:
+- ansible.builtin.lineinfile:
     dest: /etc/security/limits.conf
     regexp: '^{{ elasticsearch_user }}     -    memlock   {{ elasticsearch_max_locked_memory }}'
     insertafter: EOF
@@ -130,28 +153,28 @@
   when: elasticsearch_max_locked_memory is defined
   notify: Restart Elasticsearch
 
-- lineinfile:
+- ansible.builtin.lineinfile:
     dest: /etc/pam.d/su
     regexp: '^session    required   pam_limits.so'
     insertafter: EOF
     line: 'session    required   pam_limits.so'
   notify: Restart Elasticsearch
 
-- lineinfile:
+- ansible.builtin.lineinfile:
     dest: /etc/pam.d/common-session
     regexp: '^session    required   pam_limits.so'
     insertafter: EOF
     line: 'session    required   pam_limits.so'
   notify: Restart Elasticsearch
 
-- lineinfile:
+- ansible.builtin.lineinfile:
     dest: /etc/pam.d/common-session-noninteractive
     regexp: '^session    required   pam_limits.so'
     insertafter: EOF
     line: 'session    required   pam_limits.so'
   notify: Restart Elasticsearch
 
-- lineinfile:
+- ansible.builtin.lineinfile:
     dest: /etc/pam.d/sudo
     regexp: '^session    required   pam_limits.so'
     insertafter: EOF
@@ -193,14 +216,14 @@
 
 # Register Elasticsearch service to start on boot
 - name: Ensure Elasticsearch is started on boot
-  service:
+  ansible.builtin.service:
     name: elasticsearch
     enabled: '{{ elasticsearch_service_startonboot }}'
     state: '{{ elasticsearch_service_state }}'
 
 # Copy ES maintainance scripts to machine
 - name: Copy reroute script to machine
-  copy:
+  ansible.builtin.copy:
     src: unassigned-reroute.sh
     dest: '{{ elasticsearch_scripts_dir }}/unassigned-reroute.sh'
     mode: 'u=rwx'

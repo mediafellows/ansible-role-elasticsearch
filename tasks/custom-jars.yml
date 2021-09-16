@@ -6,11 +6,11 @@
 # 'elasticsearch_custom_jars' in your playbook or inventory, such that:
 #
 # elasticsearch_custom_jars:
-#  - { uri: '<URL where JAR can be downloaded>', filename: '<alternative name for final JAR>', user: '<BASIC auth username>', passwd: '<BASIC auth password>' }
+#  - { uri: '<URL where JAR can be downloaded>', filename: '<alternative name for final JAR>', ansible.builtin.user: '<BASIC auth username>', passwd: '<BASIC auth password>' }
 #  - ...
 
 - name: Loop though elasticsearch_custom_jars and install them
-  get_url:
+  ansible.builtin.get_url:
     url: '{{ item.uri }}'
     url_username: '{{ item.user }}'
     url_password: '{{ item.passwd }}'
@@ -18,7 +18,7 @@
   with_items: '{{ elasticsearch_custom_jars }}'
 
 - name: Fix permissions
-  file:
+  ansible.builtin.file:
     path: "{{ elasticsearch_home_dir }}/lib"
     state: directory
     owner: '{{ elasticsearch_user }}'

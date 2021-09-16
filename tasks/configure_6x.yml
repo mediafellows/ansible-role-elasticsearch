@@ -1,11 +1,13 @@
 # Configure Elasticsearch Node in ElasticSearch 6.x mode
 
 - name: Ensure configured config dir exists
-  file: path={{ elasticsearch_conf_dir }} state=directory
+  ansible.builtin.file:
+    path: '{{ elasticsearch_conf_dir }}'
+    state: directory
   when: elasticsearch_conf_dir is defined
 
 - name: Configuring Elasticsearch 6.x node
-  template:
+  ansible.builtin.template:
     src: elasticsearch-6.yml.j2
     dest: '{{ elasticsearch_conf_dir }}/elasticsearch.yml'
     owner: root
@@ -14,7 +16,7 @@
   notify: Restart Elasticsearch
 
 - name: Configure ElasticSearch 6.x default file
-  template:
+  ansible.builtin.template:
     src: elasticsearch.default-6.j2
     dest: /etc/default/elasticsearch
     owner: root
@@ -23,7 +25,7 @@
   notify: Restart Elasticsearch
 
 - name: Configure jvm.options file
-  template:
+  ansible.builtin.template:
     src: jvm.options.j2
     dest: /etc/elasticsearch/jvm.options
     owner: root

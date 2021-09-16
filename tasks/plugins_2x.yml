@@ -13,28 +13,29 @@
 
 # Cleanup installed plugins first
 - name: (ES 2.x mode) Determining which plugins are installed
-  shell: '{{ elasticsearch_home_dir }}/bin/plugin list | grep -E " - [[:alnum:]_-]+"'
+  ansible.builtin.shell:
+    cmd: '{{ elasticsearch_home_dir }}/bin/plugin list | grep -E " - [[:alnum:]_-]+"'
   register: elasticsearch_installed_plugins
   changed_when: false
 
 - name: (ES 2.x mode) Removing Plugins if they exist
-  shell: bin/plugin remove {{ item }}
-  args:
+  ansible.builtin.shell:
+    cmd: bin/plugin remove {{ item }}
     chdir: '{{ elasticsearch_home_dir }}'
   when: "'No plugin' not in item"
   with_items: '{{ elasticsearch_installed_plugins.stdout | from_yaml }}'
 
 # Loop through elasticsearch_plugins and install them
 - name: (ES 2.x mode) Installing Plugins by Name (use for official plugins within the elasticsearch repo)
-  shell: bin/plugin install {{ item.name }}
-  args:
+  ansible.builtin.shell:
+    cmd: bin/plugin install {{ item.name }}
     chdir: '{{ elasticsearch_home_dir }}'
   when: item.url is undefined
   with_items: '{{ elasticsearch_plugins }}'
 
 - name: (ES 2.x mode) Installing Plugins by URL (use for 3rd party plugins)
-  shell: bin/plugin install {{ item.url }}
-  args:
+  ansible.builtin.shell:
+    cmd: bin/plugin install {{ item.url }}
     chdir: '{{ elasticsearch_home_dir }}'
   when: item.url is defined
   with_items: '{{ elasticsearch_plugins }}'
@@ -43,14 +44,14 @@
 
 # Install AWS Plugin (see https://github.com/elasticsearch/elasticsearch-cloud-aws)
 - name: (ES 2.x mode) Installing AWS Plugin
-  shell: bin/plugin install cloud-aws
-  args:
+  ansible.builtin.shell:
+    cmd: bin/plugin install cloud-aws
     chdir: '{{ elasticsearch_home_dir }}'
   when: elasticsearch_aws_s3 or elasticsearch_aws_discovery
 
 # Fix permissions
 - name: Fix plugin file permission
-  file:
+  ansible.builtin.file:
     path: "{{ elasticsearch_plugin_dir }}"
     state: directory
     owner: "{{ elasticsearch_user }}"
@@ -59,10 +60,11 @@
 
 # List installed plugins
 - name: Get installed plugins
-  shell: '{{ elasticsearch_home_dir }}/bin/plugin list'
+  ansible.builtin.shell:
+    cmd: '{{ elasticsearch_home_dir }}/bin/plugin list'
   register: elasticsearch_plugin_list
   changed_when: false
 
 - name: Output installed ES 2.x plugins
-  debug:
+  ansible.builtin.debug:
     msg: "{{ elasticsearch_plugin_list.stdout }}"
