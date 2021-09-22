@@ -41,14 +41,9 @@ jobs:
 
       - name: Second run to check for indempotence (allowing 5 changes)
         run: "ansible-playbook -i tests/inventory tests/${{ matrix.test_play }} | grep -q 'changed=5.*failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)"
-        if: ${{ matrix.test_play != 'test-2.yml' }}
-
-      - name: test-2.yml Second run to check for indempotence (allowing 6 changes)
-        run: "ansible-playbook -i tests/inventory tests/${{ matrix.test_play }}" # | grep -q 'changed=6.*failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)"
-        if: ${{ matrix.test_play == 'test-2.yml' }}
 
       - name: Test ES with curl
-        run: curl http://localhost:9200
+        run: curl --silent http://localhost:9200
 
       - name: Setup serverspec (install gem)
         run: sudo gem install serverspec
