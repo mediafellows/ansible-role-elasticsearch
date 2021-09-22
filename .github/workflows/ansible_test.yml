@@ -5,7 +5,7 @@ on: [ push, pull_request ]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
@@ -46,9 +46,6 @@ jobs:
       - name: test-2.yml Second run to check for indempotence (allowing 6 changes)
         run: "ansible-playbook -i tests/inventory tests/${{ matrix.test_play }} | grep -q 'changed=6.*failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)"
         if: ${{ matrix.test_play == 'test-2.yml' }}
-
-      - name: Wait for ES to be started
-        run: sleep 3
 
       - name: Test ES with curl
         run: curl http://localhost:9200
