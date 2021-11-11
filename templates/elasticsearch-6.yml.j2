@@ -79,7 +79,11 @@ http.port: {{ elasticsearch_network_http_port }}
 #
 # Pass an initial list of hosts to perform discovery when new node is started:
 # The default list of hosts is ["127.0.0.1", "[::1]"]
-#
+
+{% if elasticsearch_discovery_type is defined %}
+discovery.type: {{ elasticsearch_discovery_type }}
+{% endif %}
+
 #discovery.zen.ping.unicast.hosts: ["host1", "host2"]
 {% if elasticsearch_discovery_zen_ping_unicast_hosts is defined %}
 discovery.zen.ping.unicast.hosts: {{ elasticsearch_discovery_zen_ping_unicast_hosts }}
