@@ -123,3 +123,8 @@ gateway.recover_after_nodes: {{ elasticsearch_gateway_recover_after_nodes }}
 # Require explicit names when deleting indices:
 #
 #action.destructive_requires_name: true
+
+# Disable xpack security so ES 8.x behaves like earlier versions (you should anyway not run ES on a public network)
+xpack.security.enabled: false
+xpack.security.transport.ssl.enabled: false
+xpack.security.http.ssl.enabled: false
