@@ -215,11 +215,21 @@
     - elasticsearch_version is version_compare('6.0', '>=')
 
 # Register Elasticsearch service to start on boot
-- name: Ensure Elasticsearch is started on boot
+- name: Ensure Elasticsearch is started on boot (using systemd)
+  ansible.builtin.systemd:
+    name: elasticsearch.service
+    enabled: '{{ elasticsearch_service_startonboot }}'
+    state: '{{ elasticsearch_service_state }}'
+    daemon_reload: yes
+  register: systemd_result
+  ignore_errors: true
+
+- name: Ensure Elasticsearch is started on boot (fallback to service if systemd failed)
   ansible.builtin.service:
     name: elasticsearch
     enabled: '{{ elasticsearch_service_startonboot }}'
     state: '{{ elasticsearch_service_state }}'
+  when: systemd_result.failed
 
 # Copy ES maintainance scripts to machine
 - name: Copy reroute script to machine
