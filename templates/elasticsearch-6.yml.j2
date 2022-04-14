@@ -125,6 +125,18 @@ gateway.recover_after_nodes: {{ elasticsearch_gateway_recover_after_nodes }}
 #action.destructive_requires_name: true
 
 # Disable xpack security so ES 8.x behaves like earlier versions (you should anyway not run ES on a public network)
+{% if not elasticsearch_xpack_security_enabled %}
 xpack.security.enabled: false
 xpack.security.transport.ssl.enabled: false
 xpack.security.http.ssl.enabled: false
+{% endif %}
+
+# Allow wildcards and _all when deleting indices
+{% if elasticsearch_misc_disable_delete_all_indices is defined %}
+action.destructive_requires_name: {{ elasticsearch_misc_disable_delete_all_indices }}
+{% endif %}
+
+# Set to false to isable auto creation of indices by first request
+{% if elasticsearch_misc_auto_create_index is defined %}
+action.auto_create_index: {{ elasticsearch_misc_auto_create_index }}
+{% endif %}

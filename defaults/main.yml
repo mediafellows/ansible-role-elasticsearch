@@ -25,6 +25,8 @@ elasticsearch_service_startonboot: yes
 #elasticsearch_http_cors_enabled: "false"
 elasticsearch_service_state: started
 
+elasticsearch_xpack_security_enabled: false
+
 # To install ES plugings define an array
 # called 'elasticsearch_plugins' in your playbook
 # or inventory, in this pattern:

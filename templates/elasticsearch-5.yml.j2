@@ -176,9 +176,6 @@ action.destructive_requires_name: {{ elasticsearch_misc_disable_delete_all_indic
 {% endif %}
 
 # Disable auto creation of indices by first request
-#
-# action.destructive_requires_name: false
-
 {% if elasticsearch_misc_auto_create_index is defined %}
 action.auto_create_index: {{ elasticsearch_misc_auto_create_index }}
 {% endif %}
