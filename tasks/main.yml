@@ -182,35 +182,35 @@
   notify: Restart Elasticsearch
 
 # Install custom JARs
-- include_tasks: custom-jars.yml
+- ansible.builtin.include_tasks: custom-jars.yml
   when: elasticsearch_custom_jars is defined
 
 # Configure Elasticsearch Node, depending on version
-- include_tasks: configure_2x.yml
+- ansible.builtin.include_tasks: configure_2x.yml
   when: elasticsearch_version is version_compare('5.0', '<')
 
-- include_tasks: configure_5x.yml
+- ansible.builtin.include_tasks: configure_5x.yml
   when:
     - elasticsearch_version is version_compare('5.0', '>=')
     - elasticsearch_version is version_compare('6.0', '<')
 
-- include_tasks: configure_6x.yml
+- ansible.builtin.include_tasks: configure_6x.yml
   when: elasticsearch_version is version_compare('6.0', '>=')
 
 # Install Plugins with ES 2.0 - 2.4 (ES version 5.0 follows 2.4)
-- include_tasks: plugins_2x.yml
+- ansible.builtin.include_tasks: plugins_2x.yml
   when:
     - elasticsearch_version is version_compare('2.0', '>=')
     - elasticsearch_version is version_compare('5.0', '<')
 
 # Install Plugins with ES 5.x
-- include_tasks: plugins_5x.yml
+- ansible.builtin.include_tasks: plugins_5x.yml
   when:
     - elasticsearch_version is version_compare('5.0', '>=')
     - elasticsearch_version is version_compare('6.0', '<')
 
 # Install Plugins with ES 6.x
-- include_tasks: plugins_6x.yml
+- ansible.builtin.include_tasks: plugins_6x.yml
   when:
     - elasticsearch_version is version_compare('6.0', '>=')
 
