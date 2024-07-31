@@ -4,8 +4,9 @@
   vars:
     elasticsearch_version: 8.14.3
     elasticsearch_cluster_name: my-test-cluster-8
-    elasticsearch_network_host: '_local_, _site_'
-    elasticsearch_aws_discovery: true
+    elasticsearch_network_host: 0.0.0.0
+    elasticsearch_discovery_type: single-node
+    elasticsearch_aws_discovery: false
     elasticsearch_plugins:
       - { name: 'analysis-icu' }
   roles:
