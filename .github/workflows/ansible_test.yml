@@ -5,11 +5,11 @@ on: [ push, pull_request ]
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test_play: ['test-2.yml', 'test-5.yml', 'test-6.yml']
+        test_play: ['test-6.yml', 'test-7.yml', 'test-8.yml']
     env:
       ANSIBLE_FORCE_COLOR: true
     steps:
