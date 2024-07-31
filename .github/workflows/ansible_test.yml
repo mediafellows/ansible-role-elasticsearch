@@ -39,8 +39,8 @@ jobs:
       - name: Real Ansible run
         run: ansible-playbook -i tests/inventory tests/${{ matrix.test_play }}
 
-      - name: Second run to check for indempotence (allowing 5 changes)
-        run: "ansible-playbook -i tests/inventory tests/${{ matrix.test_play }}" #| grep -q 'changed=5.*failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)"
+      - name: Second run to check for indempotence (allowing 4-5 changes)
+        run: "ansible-playbook -i tests/inventory tests/${{ matrix.test_play }} | grep -qE 'changed=(4|5).+failed=0' && (echo 'Idempotence test: pass' && exit 0) || (echo 'Idempotence test: fail' && exit 1)"
 
       - name: Test ES with curl
         run: curl --silent http://localhost:9200
