@@ -18,6 +18,16 @@
   ansible.builtin.debug:
     var: elasticsearch_heap_size
 
+- name: Require the Elasticsearch administrator password when security is enabled
+  ansible.builtin.assert:
+    that:
+      - elasticsearch_version is version_compare('6.0', '>=')
+      - elasticsearch_admin_password is defined
+      - elasticsearch_admin_password | default('') | length >= 6
+    fail_msg: Elasticsearch security requires version 6.x or newer and elasticsearch_admin_password in encrypted inventory variables.
+    quiet: true
+  when: elasticsearch_xpack_security_enabled | bool
+
 # Preparations and dependency installs
 - name: Configuring timezone
   ansible.builtin.shell:
@@ -258,6 +268,10 @@
     enabled: '{{ elasticsearch_service_startonboot }}'
     state: '{{ elasticsearch_service_state }}'
   when: systemd_result.failed
+
+- name: Configure Elasticsearch security roles and users
+  ansible.builtin.include_tasks: security.yml
+  when: elasticsearch_xpack_security_enabled | bool
 
 # Copy ES maintainance scripts to machine
 - name: Copy reroute script to machine

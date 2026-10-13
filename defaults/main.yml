@@ -26,6 +26,9 @@ elasticsearch_service_startonboot: yes
 elasticsearch_service_state: started
 
 elasticsearch_xpack_security_enabled: false
+elasticsearch_security_roles: {}
+elasticsearch_security_users: []
+elasticsearch_security_api_url: 'http://127.0.0.1:{{ elasticsearch_network_http_port }}'
 
 # To install ES plugings define an array
 # called 'elasticsearch_plugins' in your playbook

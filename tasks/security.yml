@@ -1,0 +1,155 @@
+---
+- name: Apply Elasticsearch configuration before using the security API
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the Elasticsearch HTTP port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: '{{ elasticsearch_network_http_port }}'
+    timeout: 120
+
+- name: Wait for Elasticsearch administrator authentication
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/_authenticate'
+    method: GET
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    status_code: 200
+  register: elasticsearch_admin_auth
+  until: elasticsearch_admin_auth.status == 200
+  retries: 20
+  delay: 3
+  no_log: true
+
+- name: Set the persistent password of the built-in elastic user
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/user/elastic/_password'
+    method: POST
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    body_format: json
+    body:
+      password: '{{ elasticsearch_admin_password }}'
+    status_code: 200
+  no_log: true
+
+- name: Read configured Elasticsearch roles
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/role/{{ item.key }}'
+    method: GET
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    status_code: [200, 404]
+  loop: '{{ elasticsearch_security_roles | dict2items }}'
+  loop_control:
+    label: '{{ item.key }}'
+  register: elasticsearch_security_role_reads
+  no_log: true
+
+- name: Create or update configured Elasticsearch roles
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/role/{{ item.item.key }}'
+    method: PUT
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    body_format: json
+    body: '{{ item.item.value }}'
+    status_code: 200
+  vars:
+    desired_role: '{{ item.item.value }}'
+    existing_role: "{{ (item.json | default({})).get(item.item.key, {}) }}"
+  loop: '{{ elasticsearch_security_role_reads.results }}'
+  loop_control:
+    label: '{{ item.item.key }}'
+  when: >-
+    item.status == 404 or
+    (existing_role | dict2items | selectattr('key', 'in', desired_role.keys() | list) | items2dict) != desired_role
+  no_log: true
+
+- name: Validate configured Elasticsearch users
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.roles is defined
+      - item.password is defined
+      - item.password | default('') | length >= 6
+    fail_msg: Each Elasticsearch user needs a name, roles, and a password of at least six characters.
+    quiet: true
+  loop: '{{ elasticsearch_security_users }}'
+  loop_control:
+    label: '{{ item.name | default("unnamed") }}'
+  no_log: true
+
+- name: Read configured Elasticsearch users
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/user/{{ item.name }}'
+    method: GET
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    status_code: [200, 404]
+  loop: '{{ elasticsearch_security_users }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: elasticsearch_security_user_reads
+  no_log: true
+
+- name: Check configured Elasticsearch user passwords
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/_authenticate'
+    method: GET
+    url_username: '{{ item.item.name }}'
+    url_password: '{{ item.item.password }}'
+    force_basic_auth: true
+    status_code: [200, 401]
+  loop: '{{ elasticsearch_security_user_reads.results }}'
+  loop_control:
+    label: '{{ item.item.name }}'
+  when: item.status == 200
+  register: elasticsearch_security_user_auth
+  no_log: true
+
+- name: Create or update configured Elasticsearch users
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/user/{{ item.item.name }}'
+    method: PUT
+    url_username: elastic
+    url_password: '{{ elasticsearch_admin_password }}'
+    force_basic_auth: true
+    body_format: json
+    body: >-
+      {{ desired_user_fields |
+         combine({'password': item.item.password}
+                 if item.status == 404 or
+                    (elasticsearch_security_user_auth.results[user_index].status | default(401)) != 200 else {}) }}
+    status_code: 200
+  vars:
+    desired_user_fields: "{{ item.item | dict2items | rejectattr('key', 'in', ['name', 'password']) | items2dict }}"
+    existing_user: "{{ (item.json | default({})).get(item.item.name, {}) }}"
+    existing_user_fields: "{{ existing_user | dict2items | selectattr('key', 'in', desired_user_fields.keys() | list) | items2dict }}"
+  loop: '{{ elasticsearch_security_user_reads.results }}'
+  loop_control:
+    index_var: user_index
+    label: '{{ item.item.name }}'
+  when: >-
+    item.status == 404 or
+    existing_user_fields != desired_user_fields or
+    (elasticsearch_security_user_auth.results[user_index].status | default(401)) != 200
+  no_log: true
+
+- name: Verify configured Elasticsearch user authentication
+  ansible.builtin.uri:
+    url: '{{ elasticsearch_security_api_url }}/_security/_authenticate'
+    method: GET
+    url_username: '{{ item.name }}'
+    url_password: '{{ item.password }}'
+    force_basic_auth: true
+    status_code: 200
+  loop: '{{ elasticsearch_security_users }}'
+  loop_control:
+    label: '{{ item.name }}'
+  no_log: true
