@@ -215,6 +215,34 @@
     - elasticsearch_version is version_compare('6.0', '>=')
 
 # Register Elasticsearch service to start on boot
+- name: Read Elasticsearch keystore entries
+  ansible.builtin.command:
+    argv:
+      - '{{ elasticsearch_home_dir }}/bin/elasticsearch-keystore'
+      - list
+  become_user: '{{ elasticsearch_user }}'
+  register: elasticsearch_keystore_entries
+  changed_when: false
+  when:
+    - elasticsearch_xpack_security_enabled | bool
+    - elasticsearch_admin_password is defined
+
+- name: Set bootstrap password for the built-in elastic user
+  ansible.builtin.command:
+    argv:
+      - '{{ elasticsearch_home_dir }}/bin/elasticsearch-keystore'
+      - add
+      - --stdin
+      - bootstrap.password
+    stdin: '{{ elasticsearch_admin_password }}'
+  become_user: '{{ elasticsearch_user }}'
+  no_log: true
+  when:
+    - elasticsearch_xpack_security_enabled | bool
+    - elasticsearch_admin_password is defined
+    - "'bootstrap.password' not in elasticsearch_keystore_entries.stdout_lines"
+  notify: Restart Elasticsearch
+
 - name: Ensure Elasticsearch is started on boot (using systemd)
   ansible.builtin.systemd:
     name: elasticsearch.service
