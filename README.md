@@ -12,6 +12,42 @@ This is an Ansible role for [Elasticsearch](http://www.elasticsearch.org/).
 
 
 ## Enabling Added Features
+### Authentication without TLS
+
+For a single-node Elasticsearch installation, authentication can be enabled while
+leaving both transport and HTTP TLS disabled:
+
+```yaml
+elasticsearch_discovery_type: single-node
+elasticsearch_xpack_security_enabled: true
+elasticsearch_xpack_security_tls_enabled: false
+```
+
+Set `elasticsearch_admin_password` in encrypted inventory variables. The role
+bootstraps the built-in `elastic` user and manages any configured
+`elasticsearch_security_roles` and `elasticsearch_security_users`.
+
+The `elasticsearch_xpack_security_tls_enabled` variable defaults to `false` and
+controls both transport and HTTP TLS in the Elasticsearch 6.x-and-newer template,
+independently of the authentication setting. The security API URL defaults to
+HTTP or HTTPS accordingly and can be overridden with `elasticsearch_security_api_url`.
+Setting the TLS variable to `true` also requires separately configured certificates
+and trust for the role's HTTPS API requests; the flag alone is not a complete TLS setup.
+This auth-only setup is
+not suitable for multi-node clusters on the Basic license or nodes with
+`es.enforce.bootstrap.checks=true`, which require transport TLS when security is
+enabled. TLS certificate provisioning is not implemented by this role yet.
+
+All clients, monitoring, and backup scripts must supply credentials once
+authentication is enabled. HTTP traffic, including Basic-auth credentials, remains
+unencrypted; restrict access to trusted networks until HTTP TLS is configured.
+
+To check configuration rendering without installing Elasticsearch, run:
+
+```shell
+ansible-playbook -i localhost, -c local tests/test-security-config.yml
+```
+
 ### Configuring AWS EC2 / S3 plugin
 The following variables need to be defined in your playbook or inventory:
 

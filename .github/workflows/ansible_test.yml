@@ -36,6 +36,9 @@ jobs:
       - name: Basic Ansible role syntax check
         run: ansible-playbook -i tests/inventory --syntax-check tests/${{ matrix.test_play }}
 
+      - name: Check authentication and TLS configuration rendering
+        run: ansible-playbook -i localhost, -c local tests/test-security-config.yml
+
       - name: Real Ansible run
         run: ansible-playbook -i tests/inventory tests/${{ matrix.test_play }}
 
@@ -50,4 +53,3 @@ jobs:
 
       - name: Run serverspec (as root to test everything)
         run: sudo rake spec PLAY=${{ matrix.test_play }}
-

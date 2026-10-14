@@ -1,0 +1,35 @@
+---
+- name: Check Elasticsearch authentication and TLS configuration
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../defaults/main.yml
+  vars:
+    elasticsearch_discovery_type: single-node
+  tasks:
+    - name: Verify TLS stays disabled with authentication enabled or disabled
+      ansible.builtin.assert:
+        that:
+          - rendered_config['discovery.type'] == 'single-node'
+          - rendered_config['xpack.security.enabled'] == item
+          - rendered_config['xpack.security.transport.ssl.enabled'] == false
+          - rendered_config['xpack.security.http.ssl.enabled'] == false
+          - elasticsearch_security_api_url == 'http://127.0.0.1:9200'
+      vars:
+        elasticsearch_xpack_security_enabled: '{{ item }}'
+        rendered_config: "{{ lookup('ansible.builtin.template', '../templates/elasticsearch-6.yml.j2') | from_yaml }}"
+      loop: [false, true]
+
+    - name: Verify authentication and TLS can be configured independently
+      ansible.builtin.assert:
+        that:
+          - rendered_config['xpack.security.enabled'] == item.0
+          - rendered_config['xpack.security.transport.ssl.enabled'] == item.1
+          - rendered_config['xpack.security.http.ssl.enabled'] == item.1
+          - elasticsearch_security_api_url == expected_api_url
+      vars:
+        elasticsearch_xpack_security_enabled: '{{ item.0 }}'
+        elasticsearch_xpack_security_tls_enabled: '{{ item.1 }}'
+        rendered_config: "{{ lookup('ansible.builtin.template', '../templates/elasticsearch-6.yml.j2') | from_yaml }}"
+        expected_api_url: '{{ "https" if item.1 else "http" }}://127.0.0.1:9200'
+      loop: '{{ [false, true] | product([false, true]) | list }}'
