@@ -230,7 +230,6 @@
     argv:
       - '{{ elasticsearch_home_dir }}/bin/elasticsearch-keystore'
       - list
-  become_user: '{{ elasticsearch_user }}'
   register: elasticsearch_keystore_entries
   changed_when: false
   when:
@@ -245,8 +244,6 @@
       - --stdin
       - bootstrap.password
     stdin: '{{ elasticsearch_admin_password }}'
-  become_user: '{{ elasticsearch_user }}'
-  no_log: true
   when:
     - elasticsearch_xpack_security_enabled | bool
     - elasticsearch_admin_password is defined
